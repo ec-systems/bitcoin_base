@@ -201,43 +201,43 @@ class BitcoinTransactionBuilder implements BasedBitcoinTransacationBuilder {
     final senderPub = utxo.public();
     switch (utxo.utxo.scriptType) {
       case PubKeyAddressType.p2pk:
-        return senderPub.toRedeemScript();
+        return senderPub.toRedeemScript(compressed: isOwnerPublicKeyCompressed);
       case SegwitAddresType.p2wsh:
         if (isTaproot) {
-          return senderPub.toP2wshAddress().toScriptPubKey();
+          return senderPub.toP2wshAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toP2wshScript();
+        return senderPub.toP2wshScript(compressed: isOwnerPublicKeyCompressed);
       case P2pkhAddressType.p2pkh:
         return senderPub
             .toAddress(compressed: isOwnerPublicKeyCompressed)
             .toScriptPubKey();
       case SegwitAddresType.p2wpkh:
         if (isTaproot) {
-          return senderPub.toSegwitAddress().toScriptPubKey();
+          return senderPub.toSegwitAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toAddress().toScriptPubKey();
+        return senderPub.toAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
       case SegwitAddresType.p2tr:
         return senderPub.toTaprootAddress().toScriptPubKey();
       case P2shAddressType.p2pkhInP2sh:
         if (isTaproot) {
-          return senderPub.toP2pkhInP2sh().toScriptPubKey();
+          return senderPub.toP2pkhInP2sh(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toAddress().toScriptPubKey();
+        return senderPub.toAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
       case P2shAddressType.p2wpkhInP2sh:
         if (isTaproot) {
-          return senderPub.toP2wpkhInP2sh().toScriptPubKey();
+          return senderPub.toP2wpkhInP2sh(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toAddress().toScriptPubKey();
+        return senderPub.toAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
       case P2shAddressType.p2wshInP2sh:
         if (isTaproot) {
-          return senderPub.toP2wshInP2sh().toScriptPubKey();
+          return senderPub.toP2wshInP2sh(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toP2wshScript();
+        return senderPub.toP2wshScript(compressed: isOwnerPublicKeyCompressed);
       case P2shAddressType.p2pkInP2sh:
         if (isTaproot) {
-          return senderPub.toP2pkInP2sh().toScriptPubKey();
+          return senderPub.toP2pkInP2sh(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toRedeemScript();
+        return senderPub.toRedeemScript(compressed: isOwnerPublicKeyCompressed);
     }
     throw ArgumentError("invalid bitcoin address type");
   }
@@ -350,11 +350,11 @@ that demonstrate the right to spend the bitcoins associated with the correspondi
       switch (utx.utxo.scriptType) {
         case P2shAddressType.p2wshInP2sh:
         case SegwitAddresType.p2wsh:
-          final script = senderPub.toP2wshScript();
+          final script = senderPub.toP2wshScript(compressed: isOwnerPublicKeyCompressed);
           return ['', signedDigest, script.toHex()];
         case SegwitAddresType.p2wpkh:
         case P2shAddressType.p2wpkhInP2sh:
-          return [signedDigest, senderPub.toHex()];
+          return [signedDigest, senderPub.toHex(compressed: isOwnerPublicKeyCompressed)];
         default:
           throw Exception(
               "invalid segwit address type ${utx.utxo.scriptType.value}");
@@ -366,10 +366,10 @@ that demonstrate the right to spend the bitcoins associated with the correspondi
         case P2pkhAddressType.p2pkh:
           return [signedDigest, senderPub.toHex(compressed: isOwnerPublicKeyCompressed)];
         case P2shAddressType.p2pkhInP2sh:
-          final script = senderPub.toAddress().toScriptPubKey();
-          return [signedDigest, senderPub.toHex(), script.toHex()];
+          final script = senderPub.toAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
+          return [signedDigest, senderPub.toHex(compressed: isOwnerPublicKeyCompressed), script.toHex()];
         case P2shAddressType.p2pkInP2sh:
-          final script = senderPub.toRedeemScript();
+          final script = senderPub.toRedeemScript(compressed: isOwnerPublicKeyCompressed);
           return [signedDigest, script.toHex()];
         default:
           throw Exception("invalid address type ${utx.utxo.scriptType.value}");
