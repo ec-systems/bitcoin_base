@@ -473,4 +473,10 @@ be retrieved by anyone who examines the blockchain's history.
 
     input.scriptSig = Script(script: scriptSig);
   }
+  
+  @override
+  Future<BtcTransaction> buildTransactionAsync(BitcoinSignerAsyncCallBack sign) {
+    // TODO: implement buildTransactionAsync
+    throw UnimplementedError();
+  }
 }

@@ -248,6 +248,7 @@ class BitcoinOpCodeConst {
   /// Script version and Bitcoin-related identifiers
   static const int LEAF_VERSION_TAPSCRIPT = 0xc0;
   static const List<int> DEFAULT_TX_VERSION = [0x02, 0x00, 0x00, 0x00];
+  static const List<int> LEGACY_TX_VERSION = [0x01, 0x00, 0x00, 0x00];
   static const int SATOSHIS_PER_BITCOIN = 100000000;
   static const int NEGATIVE_SATOSHI = -1;
 
