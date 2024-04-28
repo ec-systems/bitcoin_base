@@ -167,7 +167,8 @@ class BitcoinTransactionBuilder implements BasedBitcoinTransacationBuilder {
   }
 
   /// It is used to make the appropriate scriptSig
-  Script _findLockingScript(UtxoWithAddress utxo, bool isTaproot) {
+  Script _findLockingScript(UtxoWithAddress utxo, bool isTaproot,
+      {bool isOwnerPublicKeyCompressed = true}) {
     if (utxo.isMultiSig()) {
       final multiSigAAddr = utxo.multiSigAddress;
       final script = multiSigAAddr.multiSigScript;
@@ -200,41 +201,43 @@ class BitcoinTransactionBuilder implements BasedBitcoinTransacationBuilder {
     final senderPub = utxo.public();
     switch (utxo.utxo.scriptType) {
       case PubKeyAddressType.p2pk:
-        return senderPub.toRedeemScript();
+        return senderPub.toRedeemScript(compressed: isOwnerPublicKeyCompressed);
       case SegwitAddresType.p2wsh:
         if (isTaproot) {
-          return senderPub.toP2wshAddress().toScriptPubKey();
+          return senderPub.toP2wshAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toP2wshScript();
+        return senderPub.toP2wshScript(compressed: isOwnerPublicKeyCompressed);
       case P2pkhAddressType.p2pkh:
-        return senderPub.toAddress().toScriptPubKey();
+        return senderPub
+            .toAddress(compressed: isOwnerPublicKeyCompressed)
+            .toScriptPubKey();
       case SegwitAddresType.p2wpkh:
         if (isTaproot) {
-          return senderPub.toSegwitAddress().toScriptPubKey();
+          return senderPub.toSegwitAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toAddress().toScriptPubKey();
+        return senderPub.toAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
       case SegwitAddresType.p2tr:
         return senderPub.toTaprootAddress().toScriptPubKey();
       case P2shAddressType.p2pkhInP2sh:
         if (isTaproot) {
-          return senderPub.toP2pkhInP2sh().toScriptPubKey();
+          return senderPub.toP2pkhInP2sh(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toAddress().toScriptPubKey();
+        return senderPub.toAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
       case P2shAddressType.p2wpkhInP2sh:
         if (isTaproot) {
-          return senderPub.toP2wpkhInP2sh().toScriptPubKey();
+          return senderPub.toP2wpkhInP2sh(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toAddress().toScriptPubKey();
+        return senderPub.toAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
       case P2shAddressType.p2wshInP2sh:
         if (isTaproot) {
-          return senderPub.toP2wshInP2sh().toScriptPubKey();
+          return senderPub.toP2wshInP2sh(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toP2wshScript();
+        return senderPub.toP2wshScript(compressed: isOwnerPublicKeyCompressed);
       case P2shAddressType.p2pkInP2sh:
         if (isTaproot) {
-          return senderPub.toP2pkInP2sh().toScriptPubKey();
+          return senderPub.toP2pkInP2sh(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
         }
-        return senderPub.toRedeemScript();
+        return senderPub.toRedeemScript(compressed: isOwnerPublicKeyCompressed);
     }
     throw ArgumentError("invalid bitcoin address type");
   }
@@ -337,7 +340,8 @@ the unlocking script because it provides data and instructions to unlock
 a specific output. It contains information and cryptographic signatures
 that demonstrate the right to spend the bitcoins associated with the corresponding scriptPubKey output.
 */
-  List<String> _buildUnlockingScript(String signedDigest, UtxoWithAddress utx) {
+  List<String> _buildUnlockingScript(String signedDigest, UtxoWithAddress utx,
+      {bool isOwnerPublicKeyCompressed = true}) {
     final senderPub = utx.public();
     if (utx.utxo.isSegwit()) {
       if (utx.utxo.isP2tr()) {
@@ -346,11 +350,11 @@ that demonstrate the right to spend the bitcoins associated with the correspondi
       switch (utx.utxo.scriptType) {
         case P2shAddressType.p2wshInP2sh:
         case SegwitAddresType.p2wsh:
-          final script = senderPub.toP2wshScript();
+          final script = senderPub.toP2wshScript(compressed: isOwnerPublicKeyCompressed);
           return ['', signedDigest, script.toHex()];
         case SegwitAddresType.p2wpkh:
         case P2shAddressType.p2wpkhInP2sh:
-          return [signedDigest, senderPub.toHex()];
+          return [signedDigest, senderPub.toHex(compressed: isOwnerPublicKeyCompressed)];
         default:
           throw Exception(
               "invalid segwit address type ${utx.utxo.scriptType.value}");
@@ -360,12 +364,12 @@ that demonstrate the right to spend the bitcoins associated with the correspondi
         case PubKeyAddressType.p2pk:
           return [signedDigest];
         case P2pkhAddressType.p2pkh:
-          return [signedDigest, senderPub.toHex()];
+          return [signedDigest, senderPub.toHex(compressed: isOwnerPublicKeyCompressed)];
         case P2shAddressType.p2pkhInP2sh:
-          final script = senderPub.toAddress().toScriptPubKey();
-          return [signedDigest, senderPub.toHex(), script.toHex()];
+          final script = senderPub.toAddress(compressed: isOwnerPublicKeyCompressed).toScriptPubKey();
+          return [signedDigest, senderPub.toHex(compressed: isOwnerPublicKeyCompressed), script.toHex()];
         case P2shAddressType.p2pkInP2sh:
-          final script = senderPub.toRedeemScript();
+          final script = senderPub.toRedeemScript(compressed: isOwnerPublicKeyCompressed);
           return [signedDigest, script.toHex()];
         default:
           throw Exception("invalid address type ${utx.utxo.scriptType.value}");
@@ -586,11 +590,12 @@ that demonstrate the right to spend the bitcoins associated with the correspondi
       required TxInput input,
       required List<String> signatures,
       required List<TxWitnessInput> witnesses,
-      required bool hasSegwit}) {
+      required bool hasSegwit,
+      bool isOwnerPublicKeyCompressed = true}) {
     /// ok we signed, now we need unlocking script for this input
     final scriptSig = utxo.isMultiSig()
         ? _buildMiltisigUnlockingScript(signatures, utxo)
-        : _buildUnlockingScript(signatures.first, utxo);
+        : _buildUnlockingScript(signatures.first, utxo, isOwnerPublicKeyCompressed: isOwnerPublicKeyCompressed);
 
     /// Now we need to add it to the transaction
     /// check if current utxo is segwit or not
@@ -617,5 +622,134 @@ that demonstrate the right to spend the bitcoins associated with the correspondi
         witnesses.add(TxWitnessInput(stack: []));
       }
     }
+  }
+
+  @override
+  Future<BtcTransaction> buildTransactionAsync(
+    BitcoinSignerAsyncCallBack sign, {
+    bool isOwnerAddressLegacy = false,
+    bool isOwnerPublicKeyCompressed = true,
+  }) async {
+    /// build inputs
+    final sortedInputs = _buildInputs();
+
+    final List<TxInput> inputs = sortedInputs.item1;
+
+    final List<UtxoWithAddress> utxos = sortedInputs.item2;
+
+    /// build outout
+    final outputs = _buildOutputs();
+
+    /// check transaction is segwit
+    final hasSegwit = _hasSegwit();
+
+    /// check transaction is taproot
+    final hasTaproot = _hasTaproot();
+
+    /// sum of amounts you filled in outputs
+    final sumOutputAmounts = _sumOutputAmounts(outputs);
+
+    /// sum of UTXOS amount
+    final sumUtxoAmount = utxos.sumOfUtxosValue();
+
+    /// sum of outputs amount + transcation fee
+    final sumAmountsWithFee = (sumOutputAmounts + fee);
+
+    /// We will check whether you have spent the correct amounts or not
+    if (!isFakeTransaction && sumAmountsWithFee != sumUtxoAmount) {
+      throw ArgumentError('Sum value of utxo not spending');
+    }
+
+    /// create new transaction with inputs and outputs and isSegwit transaction or not
+    BtcTransaction transaction = BtcTransaction(
+        inputs: inputs,
+        outputs: outputs,
+        hasSegwit: hasSegwit,
+        version: isOwnerAddressLegacy
+            ? [0x01, 0x00, 0x00, 0x00]
+            : BitcoinOpCodeConst.LEGACY_TX_VERSION);
+
+    /// we define empty witnesses. maybe the transaction is segwit and We need this
+    final witnesses = <TxWitnessInput>[];
+
+    /// when the transaction is taproot and we must use getTaproot tansaction digest
+    /// we need all of inputs amounts and owner script pub keys
+    List<BigInt> taprootAmounts = [];
+    List<Script> taprootScripts = [];
+
+    if (hasTaproot) {
+      taprootAmounts = utxos.map((e) => e.utxo.value).toList();
+      taprootScripts = utxos.map((e) => _findLockingScript(e, true)).toList();
+    }
+
+    /// Well, now let's do what we want for each input
+    for (int i = 0; i < inputs.length; i++) {
+      /// We receive the owner's ScriptPubKey
+      final script = _findLockingScript(utxos[i], false,
+          isOwnerPublicKeyCompressed: isOwnerPublicKeyCompressed);
+
+      /// We generate transaction digest for current input
+      final digest = _generateTransactionDigest(
+          script, i, utxos[i], transaction, taprootAmounts, taprootScripts);
+      final int sighash = utxos[i].utxo.isP2tr()
+          ? BitcoinOpCodeConst.TAPROOT_SIGHASH_ALL
+          : BitcoinOpCodeConst.SIGHASH_ALL;
+
+      /// handle multisig address
+      if (utxos[i].isMultiSig()) {
+        final multiSigAddress = utxos[i].multiSigAddress;
+        int sumMultiSigWeight = 0;
+        final mutlsiSigSignatures = <String>[];
+        for (int ownerIndex = 0;
+            ownerIndex < multiSigAddress.signers.length;
+            ownerIndex++) {
+          /// now we need sign the transaction digest
+          final sig = await sign(digest, utxos[i],
+              multiSigAddress.signers[ownerIndex].publicKey, sighash);
+          if (sig.isEmpty) continue;
+          for (int weight = 0;
+              weight < multiSigAddress.signers[ownerIndex].weight;
+              weight++) {
+            if (mutlsiSigSignatures.length >= multiSigAddress.threshold) {
+              break;
+            }
+            mutlsiSigSignatures.add(sig);
+          }
+          sumMultiSigWeight += multiSigAddress.signers[ownerIndex].weight;
+          if (sumMultiSigWeight >= multiSigAddress.threshold) {
+            break;
+          }
+        }
+        if (sumMultiSigWeight != multiSigAddress.threshold) {
+          throw StateError("some multisig signature does not exist");
+        }
+        _addUnlockScriptScript(
+            hasSegwit: hasSegwit,
+            input: inputs[i],
+            signatures: mutlsiSigSignatures,
+            utxo: utxos[i],
+            witnesses: witnesses);
+        continue;
+      }
+
+      /// now we need sign the transaction digest
+      final sig =
+          await sign(digest, utxos[i], utxos[i].public().toHex(), sighash);
+      _addUnlockScriptScript(
+          hasSegwit: hasSegwit,
+          input: inputs[i],
+          signatures: [sig],
+          utxo: utxos[i],
+          witnesses: witnesses,
+          isOwnerPublicKeyCompressed: isOwnerPublicKeyCompressed);
+    }
+
+    /// ok we now check if the transaction is segwit We add all witnesses to the transaction
+    if (hasSegwit) {
+      // add all witnesses to the transaction
+      transaction = transaction.copyWith(witnesses: witnesses);
+    }
+
+    return transaction;
   }
 }
